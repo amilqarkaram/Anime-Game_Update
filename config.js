@@ -8,4 +8,7 @@ module.exports = {
   // the IPv6 address ::1, which a default MongoDB install does not listen on.
   MONGODB_URI: process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/animeDB",
   PORT: Number(process.env.PORT) || 3000,
+  // signs the session cookie that identifies each player; set your own random
+  // value in .env before putting the game online
+  SESSION_SECRET: process.env.SESSION_SECRET || "dev-only-secret-change-me",
 };
