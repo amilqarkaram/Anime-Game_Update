@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
@@ -9,7 +10,7 @@ const settingsForm = require(__dirname + "/lib/settings.js");
 const { shuffle } = require(__dirname + "/lib/quiz.js");
 const { hasImage } = require(__dirname + "/lib/titles.js");
 
-const numAnswers = 4; // four choices per question
+const NUM_ANSWERS = 4; // four choices per question
 const TOTAL_QUESTIONS = 10;
 
 // Everything that belongs to one player lives in their session (one per
@@ -26,9 +27,18 @@ function newGame(settings, questions) {
   };
 }
 
+// options (all optional; tests use them to run without MongoDB):
+//   sessionStore  where sessions are kept (default: MongoDB)
+//   quiz          { createAnswers } that builds questions (default: retrieve.js)
+//   scores        { addInfo, getInfo } for the scoreboard (default: save-score.js)
 function createApp(options = {}) {
+  const quiz = options.quiz || retrieve;
+  const scores = options.scores || saveScore;
   const app = express();
   app.use(express.static(__dirname + "/public")); // css and browser-side js
+  // Bootstrap's stylesheet is served from the installed package instead of
+  // a third-party CDN link pinned to an old version
+  app.use("/vendor/bootstrap", express.static(path.join(path.dirname(require.resolve("bootstrap/package.json")), "dist")));
   app.use(express.urlencoded({ extended: true })); // read form posts
   app.use(express.json()); // answers sent by the game page's script
   app.set("view engine", "ejs");
@@ -37,9 +47,9 @@ function createApp(options = {}) {
     secret: config.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    // sessions are kept in MongoDB so they survive a server restart;
-    // tests pass their own in-memory store instead
-    store: options.sessionStore || MongoStore.create({ mongoUrl: config.MONGODB_URI }),
+    // sessions are kept in MongoDB (reusing the app's connection) so games
+    // survive a server restart
+    store: options.sessionStore || MongoStore.create({ client: db.mongoose.connection.getClient() }),
     cookie: { httpOnly: true, sameSite: "lax" },
   }));
 
@@ -70,7 +80,7 @@ function createApp(options = {}) {
     const perType = Math.ceil(TOTAL_QUESTIONS / settings.types.length);
     const questions = [];
     for (const type of settings.types) {
-      const forType = await retrieve.createAnswers(settings.difficulty, numAnswers, type, settings.genres, perType, settings.decades);
+      const forType = await quiz.createAnswers(settings.difficulty, NUM_ANSWERS, type, settings.genres, perType, settings.decades);
       if (forType.length === 0) {
         return renderIndex(res.status(400), settings,
           "Not enough " + (type === "anime" ? "anime" : "manga") + " match these choices to make a question. " +
@@ -148,14 +158,14 @@ function createApp(options = {}) {
       game.scoreSaved = true;
       await new Promise((resolve, reject) => req.session.save((err) => (err ? reject(err) : resolve())));
       try {
-        const saved = await saveScore.addInfo(game.username, game.score, game.questions.length);
+        const saved = await scores.addInfo(game.username, game.score, game.questions.length);
         game.scoreId = String(saved._id);
       } catch (err) {
         game.scoreSaved = false; // let a reload try again
         throw err;
       }
     }
-    const scoreboard = await saveScore.getInfo(10);
+    const scoreboard = await scores.getInfo(10);
     res.render("score", {
       scoreboard,
       myScoreId: game.scoreId,
@@ -197,6 +207,9 @@ if (require.main === module) {
     .then(async () => {
       if (await db.needsMigration()) {
         console.warn("This database was filled by the old scraper. Run `npm run migrate` once so difficulty filtering works.");
+      }
+      if (!process.env.SESSION_SECRET) {
+        console.warn("SESSION_SECRET is not set; using a development value. Set one in .env before putting the game online.");
       }
       createApp().listen(config.PORT, () => console.log("listening on http://localhost:" + config.PORT));
     })
