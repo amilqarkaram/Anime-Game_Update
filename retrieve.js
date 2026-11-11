@@ -78,101 +78,28 @@ function find(difficulty, dataVar, genres,i,type,years){
 }
 module.exports = {
 
-createAnswers: function(difficulty,numAns,type,genres,numQ,years){
-return new Promise(function(resolve, reject){
-//console.log("function ran");
-var j = 0;
-var filteredData = [];
-if(type === "anime"){
-  console.log("retrieving anime");
-        async function main(){
-          for(let i = 0; i < genres.length;++i){
-          filteredData = await find(difficulty,filteredData,genres,i,type,years);
-          }
-          removeUnqualifiedYears(years,filteredData).then(() => {console.log("done filtering")});//console.log(util.inspect(filteredData, false, null));});
-          let answers = {};
-          let questions = [];
-          let ans = [];
-          // create 10 random questions with 4 random answerName
-          //where questions is an array containing 4 answers contained in an object
-          for(let i  = 0; i < numQ; ++i){
-              for(let j = 0; j < numAns; ++j){
-                randNum = Math.floor(Math.random() * filteredData.length);
-                console.log("filtetered Data length: " + filteredData.length);
-                ans.push(filteredData[randNum]);
-                console.log(filteredData[randNum].releaseDates);
-
-                filteredData.splice(randNum,1);
-              };
-              answers = {
-                answer1: ans[0],
-                answer2: ans[1],
-                answer3: ans[2],
-                answer4: ans[3]
-              };
-              ans = [];
-              questions.push(answers);
-          };
-            //console.log(questions);
-            resolve(questions);
-          //console.log(filteredData);
-          //console.log(filteredData);
-        }
-          main();
-
-}
-else if(type === "manga"){
-  console.log("retrieving manga");
-  async function main(){
-    for(let i = 0; i < genres.length;++i){
-    filteredData = await find(difficulty,filteredData,genres,i,type,years);
-    //console.log(filteredData);
-    }
-      removeUnqualifiedYears(years,filteredData).then(() => {console.log("done filtering")});
-    let answers = {};
-    let questions = [];
-    let ans = [];
-    for(let i  = 0; i < numQ; ++i){
-        for(let j = 0; j < numAns; ++j){
-          randNum = Math.floor(Math.random() * filteredData.length);
-          ans.push(filteredData[randNum]);
-          filteredData.splice(randNum,1);
-        };
-        answers = {
-          answer1: ans[0],
-          answer2: ans[1],
-          answer3: ans[2],
-          answer4: ans[3]
-        };
-        ans = [];
-        questions.push(answers);
-    };
-      //console.log(questions);
-      resolve(questions);
-    //console.log(filteredData);
-    //console.log(filteredData);
+// Builds numQ questions of numAns titles each; the first title of every
+// question is the right answer. As an async function, any database error is
+// passed back to the caller (and on to the error page) instead of escaping as
+// an unhandled rejection that crashes the server.
+createAnswers: async function(difficulty, numAns, type, genres, numQ, years){
+  console.log("retrieving " + type);
+  let filteredData = [];
+  for(let i = 0; i < genres.length; ++i){
+    filteredData = await find(difficulty, filteredData, genres, i, type, years);
   }
-    main();
-}
-//console.log("genres length: " + genres.length + ", j is: " + j);
-});
+  await removeUnqualifiedYears(years, filteredData);
+  // create numQ random questions with numAns random answers each
+  const questions = [];
+  for(let i = 0; i < numQ; ++i){
+    const ans = [];
+    for(let j = 0; j < numAns; ++j){
+      const randNum = Math.floor(Math.random() * filteredData.length);
+      ans.push(filteredData[randNum]);
+      filteredData.splice(randNum, 1);
+    }
+    questions.push({ answer1: ans[0], answer2: ans[1], answer3: ans[2], answer4: ans[3] });
+  }
+  return questions;
 }
 };
-
-
-//   let vals = [];
-//   let randAns = [];
-//   let tempAns = [...data.answerNames];
-//   let temp = 4;
-//   for(var i = 0; i < numAnswers;++i){
-//   let rand = Math.floor(temp * Math.random());
-//   randAns.push(tempAns[rand]);
-//   if(tempAns[rand] === data.correctAnswerName){
-//     vals.push("correct");
-//   }
-//   else{
-//     vals.push("incorrect");
-//   }
-//   tempAns.splice(rand,1);
-//   --temp;
-// }

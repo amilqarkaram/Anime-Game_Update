@@ -1,3 +1,8 @@
+<%
+  // the choices on this page come from lib/settings.js, and `form` holds what
+  // the player picked last time so a page shown with an error keeps them
+  const has = (field, value) => (form[field] || []).includes(value);
+%>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
@@ -16,64 +21,47 @@
       <p>Hello fellow anime enthusiasts! I created this game as a fun way to test the breadth of your knowledge! <br></p>
       <p>First, pick a few genres that you want to test your expertise in!</p>
     </div>
+    <% if (error) { %>
+      <div class="alert alert-warning error-message" role="alert"><%= error %></div>
+    <% } %>
     <!-- every choice is a real form field, so pressing Play sends them all in one request -->
     <form action="/start" method="post">
       <div class="genresTable">
+        <% for (let i = 0; i < genres.length; i += 4) { %>
         <div class="row no-gutters">
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="action"><span class="genres btn btn-success shadow-none">action</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="comedy"><span class="genres btn btn-success shadow-none">comedy</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="adventure"><span class="genres btn btn-success shadow-none">adventure</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="drama"><span class="genres btn btn-success shadow-none">drama</span></label></div>
+          <% for (const g of genres.slice(i, i + 4)) { %>
+          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="<%= g %>" <%= has("genres", g) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= g %></span></label></div>
+          <% } %>
         </div>
-        <div class="row no-gutters">
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="slice of life"><span class="genres btn btn-success shadow-none">slice of life</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="erotica"><span class="genres btn btn-success shadow-none">erotica</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="fantasy"><span class="genres btn btn-success shadow-none">fantasy</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="magic"><span class="genres btn btn-success shadow-none">magic</span></label></div>
-        </div>
-        <div class="row no-gutters">
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="supernatural"><span class="genres btn btn-success shadow-none">supernatural</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="horror"><span class="genres btn btn-success shadow-none">horror</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="mystery"><span class="genres btn btn-success shadow-none">mystery</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="psychological"><span class="genres btn btn-success shadow-none">psychological</span></label></div>
-        </div>
-        <div class="row no-gutters">
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="romance"><span class="genres btn btn-success shadow-none">romance</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="science fiction"><span class="genres btn btn-success shadow-none">science fiction</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="thriller"><span class="genres btn btn-success shadow-none">thriller</span></label></div>
-          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="tournament"><span class="genres btn btn-success shadow-none">tournament</span></label></div>
-        </div>
+        <% } %>
       </div>
       <p>Which do you know better?</p>
       <div class="mOrA">
         <div class="row no-gutters">
-          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="types" value="anime"><span class="genres btn btn-success shadow-none">Anime</span></label></div>
-          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="types" value="manga"><span class="genres btn btn-success shadow-none">Manga</span></label></div>
+          <% for (const [value, text] of [["anime", "Anime"], ["manga", "Manga"]]) { %>
+          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="types" value="<%= value %>" <%= has("types", value) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= text %></span></label></div>
+          <% } %>
         </div>
       </div>
       <p>What level are you at?</p>
       <div class="mOrA">
         <div class="row no-gutters">
-          <div class="col-12 col-md-4"><label class="toggle"><input type="radio" name="difficulty" value="Normal" checked><span class="difficulty btn btn-success shadow-none">Normal</span></label></div>
-          <div class="col-12 col-md-4"><label class="toggle"><input type="radio" name="difficulty" value="Expert"><span class="difficulty btn btn-success shadow-none">Expert</span></label></div>
-          <div class="col-12 col-md-4"><label class="toggle"><input type="radio" name="difficulty" value="Master"><span class="difficulty btn btn-success shadow-none">Master</span></label></div>
+          <% for (const d of difficulties) { %>
+          <div class="col-12 col-md-4"><label class="toggle"><input type="radio" name="difficulty" value="<%= d %>" <%= (form.difficulty || difficulties[0]) === d ? "checked" : "" %>><span class="difficulty btn btn-success shadow-none"><%= d %></span></label></div>
+          <% } %>
         </div>
       </div>
       <p>When were your weeb years?</p>
       <div class="genresTable">
         <div class="row no-gutters">
-          <div class="col-12 col-md-4"><label class="toggle"><input type="checkbox" name="decades" value="2010"><span class="genres btn btn-success shadow-none">2010s</span></label></div>
-          <div class="col-12 col-md-4"><label class="toggle"><input type="checkbox" name="decades" value="2000"><span class="genres btn btn-success shadow-none">2000s</span></label></div>
-          <div class="col-12 col-md-4"><label class="toggle"><input type="checkbox" name="decades" value="1990"><span class="genres btn btn-success shadow-none">1990s</span></label></div>
-        </div>
-        <div class="row no-gutters">
-          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="decades" value="1980"><span class="genres btn btn-success shadow-none">1980s</span></label></div>
-          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="decades" value="1970"><span class="genres btn btn-success shadow-none">1970s</span></label></div>
+          <% for (const d of decades) { %>
+          <div class="col-12 col-md-4"><label class="toggle"><input type="checkbox" name="decades" value="<%= d %>" <%= has("decades", d) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= d %>s</span></label></div>
+          <% } %>
         </div>
       </div>
       <p>Finally, put in your username so you can showoff your score!</p>
       <div class="inputField">
-        <input type="text" name="username" placeholder="Player Name" autocomplete="off" maxlength="20">
+        <input type="text" name="username" placeholder="Player Name" autocomplete="off" maxlength="<%= maxUsername %>" value="<%= form.username === "Anonymous" ? "" : (form.username || "") %>">
       </div>
       <div class="play">
         <h6>Whenever you're ready, click play below!</h6>

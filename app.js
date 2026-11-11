@@ -5,6 +5,7 @@ const config = require(__dirname + "/config.js");
 const db = require(__dirname + "/db.js");
 const retrieve = require(__dirname + "/retrieve.js");
 const saveScore = require(__dirname + "/save-score.js");
+const settingsForm = require(__dirname + "/lib/settings.js");
 
 const numAnswers = 4; // four choices per question
 
@@ -41,19 +42,34 @@ function createApp(options = {}) {
     cookie: { httpOnly: true, sameSite: "lax" },
   }));
 
+  function renderIndex(res, form = {}, error = null) {
+    res.render("index", {
+      form, error,
+      genres: settingsForm.GENRES,
+      difficulties: settingsForm.DIFFICULTIES,
+      decades: settingsForm.DECADES,
+      maxUsername: settingsForm.MAX_USERNAME,
+    });
+  }
+
   app.get("/", function (req, res) {
-    res.render("index");
+    renderIndex(res);
   });
 
   // The Play button submits the whole settings form in one request, so the
   // server always has the player's choices before the first question is built.
   app.post("/start", function (req, res) {
+    const { settings, error } = settingsForm.parseSettings(req.body);
+    if (error) {
+      // show the form again, with their choices still ticked
+      return renderIndex(res.status(400), settings, error);
+    }
     const game = newGame();
-    game.username = req.body.username;
-    game.types = toArray(req.body.types);
-    game.genres = toArray(req.body.genres);
-    game.difficulty = req.body.difficulty;
-    game.years = toArray(req.body.decades);
+    game.username = settings.username;
+    game.types = settings.types;
+    game.genres = settings.genres;
+    game.difficulty = settings.difficulty;
+    game.years = settings.decades;
     game.questionNumber = 1;
     req.session.game = game;
     res.redirect("/game");
@@ -128,13 +144,15 @@ function createApp(options = {}) {
     req.session.save(() => setTimeout(() => res.redirect("/game"), 1000));
   });
 
-  return app;
-}
+  // Anything unexpected (database down, a bug) shows a page with a way back
+  // instead of leaving the browser waiting on a request that never finishes.
+  app.use(function (err, req, res, next) {
+    console.error(err);
+    if (res.headersSent) return next(err);
+    res.status(500).render("error", { message: "The quiz could not be loaded. Please try again." });
+  });
 
-// a form field sent once arrives as a string, sent several times as an array
-function toArray(value) {
-  if (value === undefined) return [];
-  return Array.isArray(value) ? value : [value];
+  return app;
 }
 
 function pick(title) {
@@ -145,7 +163,12 @@ module.exports = { createApp };
 
 // start the server when this file is run directly (node app.js)
 if (require.main === module) {
-  db.connect().then(() => {
-    createApp().listen(config.PORT, () => console.log("listening on port " + config.PORT));
-  });
+  db.connect()
+    .then(() => {
+      createApp().listen(config.PORT, () => console.log("listening on http://localhost:" + config.PORT));
+    })
+    .catch((err) => {
+      console.error("Could not connect to MongoDB at " + config.MONGODB_URI.replace(/\/\/[^@]*@/, "//***@") + "\n" + err.message);
+      process.exit(1);
+    });
 }

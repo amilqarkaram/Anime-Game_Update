@@ -99,3 +99,8 @@ button:hover{
 .hide{
   display:none;
 }
+.error-message{
+  width: 600px;
+  max-width: 90%;
+  margin: 10px auto;
+}
