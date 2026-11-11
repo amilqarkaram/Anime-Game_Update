@@ -6,6 +6,7 @@ const util = require("util");
 //problem: i use the earliest date root to match with one from the database. However, if sombody picked 2010 and 1990
 const { Anime, Manga } = require(__dirname + "/db.js");
 const { buildQuestions } = require(__dirname + "/lib/quiz.js");
+const { MIN_VOTES } = require(__dirname + "/lib/settings.js");
 // this function will remove any years not specified
 function removeUnqualifiedYears(years,data){
 return new Promise((resolve, reject) => {
@@ -59,20 +60,15 @@ console.log("removeElement array " + removeElement);
 // assumption that the most votes the more known and thus the easier
 
 function find(difficulty, dataVar, genres,i,type,years){
-  var min = undefined;
-  if(difficulty === "Normal"){
-    min = 1000;
-  }
-  else if(difficulty === "Expert"){
-    min = 500;
-  }
-  else if(difficulty === "Master"){
-    min = 0;
+  const query = {genres: genres[i]};
+  const min = MIN_VOTES[difficulty];
+  if(min > 0){
+    query.nbVotes = {$gte: min};
   }
   console.log("find function runs ");
   const Model = type === "anime" ? Anime : Manga;
   // filters through all titles based on genre and number of votes
-  return Model.find({genres: genres[i], nbVotes: {$gte: min}}).then(function(data){
+  return Model.find(query).then(function(data){
     console.log("length of filteredData: " + data.length);
     return dataVar.concat(data);
   });

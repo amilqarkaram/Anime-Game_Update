@@ -151,14 +151,15 @@ function getDetails(){
         releaseDates.push("none");
       }
       if(root.ratings == undefined){
-          nbVotes = "none";
-          weightedScore = "none"
-          bayesianScore = "none";
+          nbVotes = null;
+          weightedScore = null;
+          bayesianScore = null;
       }
       else{
-        nbVotes = root.ratings[0].$.nb_votes;
-        weightedScore = root.ratings[0].$.weighted_score;
-        bayesianScore = root.ratings[0].$.bayesian_score;
+        // stored as numbers so the difficulty filter can compare them
+        nbVotes = Number(root.ratings[0].$.nb_votes);
+        weightedScore = Number(root.ratings[0].$.weighted_score);
+        bayesianScore = Number(root.ratings[0].$.bayesian_score);
 
       }
       // if there is no information the give default value of "none"

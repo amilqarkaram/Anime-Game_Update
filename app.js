@@ -161,7 +161,10 @@ module.exports = { createApp };
 // start the server when this file is run directly (node app.js)
 if (require.main === module) {
   db.connect()
-    .then(() => {
+    .then(async () => {
+      if (await db.needsMigration()) {
+        console.warn("This database was filled by the old scraper. Run `npm run migrate` once so difficulty filtering works.");
+      }
       createApp().listen(config.PORT, () => console.log("listening on http://localhost:" + config.PORT));
     })
     .catch((err) => {
