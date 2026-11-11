@@ -30,6 +30,7 @@ function createApp(options = {}) {
   const app = express();
   app.use(express.static(__dirname + "/public")); // css and browser-side js
   app.use(express.urlencoded({ extended: true })); // read form posts
+  app.use(express.json()); // answers sent by the game page's script
   app.set("view engine", "ejs");
   app.set("views", __dirname + "/views");
   app.use(session({
@@ -98,27 +99,39 @@ function createApp(options = {}) {
     res.render("game", {
       questionIndex: game.current,
       imageSrc: q.imgSrc, src: q.plotSummary,
-      answer1: q.choices[0], answer2: q.choices[1], answer3: q.choices[2], answer4: q.choices[3],
-      val1: q.answer === 0 ? "correct" : "incorrect", val2: q.answer === 1 ? "correct" : "incorrect",
-      val3: q.answer === 2 ? "correct" : "incorrect", val4: q.answer === 3 ? "correct" : "incorrect",
+      choices: q.choices,
     });
   });
 
+  // The page only says which button was clicked (0-3); whether it was right
+  // is decided here. Before, every button carried value="correct" or
+  // "incorrect" in the page source, so the answer could simply be read off,
+  // or sent as "correct" every time.
+  // The game page's script asks for JSON so it can colour the buttons before
+  // moving on; a plain form post (no JavaScript) is redirected straight on.
   app.post("/game", function (req, res) {
+    const wantsJson = req.is("application/json");
     const game = req.session.game;
     if (!game) {
-      return res.redirect("/");
+      return wantsJson ? res.status(409).json({ next: "/" }) : res.redirect("/");
     }
+    const index = Number(req.body.question);
+    const q = game.questions[index];
+    let correct = null;
     // Only an answer to the question currently shown counts. A double click,
     // or going back and answering an old question again, changes nothing.
-    if (Number(req.body.question) === game.current && game.current < game.questions.length) {
-      if (req.body.button === "correct") {
+    if (index === game.current && q) {
+      correct = Number(req.body.choice) === q.answer;
+      if (correct) {
         ++game.score;
       }
       ++game.current;
     }
-    // wait 1 second before redirecting, so the player can see if they were right or wrong
-    req.session.save(() => setTimeout(() => res.redirect("/game"), 1000));
+    const next = game.current >= game.questions.length ? "/score" : "/game";
+    if (wantsJson) {
+      return res.json({ correct, answer: q ? q.answer : null, next });
+    }
+    res.redirect(next);
   });
 
   // The score is saved the first time this page is shown for a finished game;

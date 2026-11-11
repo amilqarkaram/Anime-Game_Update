@@ -12,31 +12,23 @@
   <div class="image">
     <% if (imageSrc) { %>
     <img style="width: 20%; height: 20%" src="<%= imageSrc %>" alt="Which title is this?">
-  <% } else{ %>
-    <p><%=src%></p>
+  <% } else { %>
+    <p><%= src %></p>
   <% } %>
   </div>
-  <table class = "answerChoices">
-    <form action="/game" method="post">
-      <input type="hidden" name="question" value="<%= questionIndex %>">
-      <div class="row">
-        <div class= "col-12 col-lg-6 button">
-          <button class = "btn btn-light btn-lg"type="submit" name="button" value = <%= val1 %> ><%= answer1 %></button>
-        </div>
-        <div class="col-12 col-lg-6 button">
-          <button class = "btn btn-light btn-lg"type="submit" name="button" value = <%= val2 %> ><%= answer2 %></button>
-        </div>
+  <!-- the buttons only carry their position; the server knows the answer -->
+  <form class="answerChoices" action="/game" method="post">
+    <input type="hidden" name="question" value="<%= questionIndex %>">
+    <% for (let row = 0; row < 2; row++) { %>
+    <div class="row">
+      <% for (let i = row * 2; i < row * 2 + 2; i++) { %>
+      <div class="col-12 col-lg-6 button">
+        <button class="btn btn-light btn-lg" type="submit" name="choice" value="<%= i %>"><%= choices[i] %></button>
       </div>
-      <div class="row">
-        <div class= "col-12 col-lg-6 button">
-          <button class = "btn btn-light btn-lg"type="submit" name="button" value = <%= val3 %> ><%= answer3 %></button>
-        </div>
-        <div class="col-12 col-lg-6 button">
-          <button class = "btn btn-light btn-lg"type="submit" name="button" value = <%= val4 %> ><%= answer4 %></button>
-        </div>
-      </div>
-    </form>
-  </table>
+      <% } %>
+    </div>
+    <% } %>
+  </form>
 </div>
   <script src="extra-game.js" charset="utf-8"></script>
   </body>
