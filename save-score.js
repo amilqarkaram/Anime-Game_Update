@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 // connecting to specific animeDB database
-mongoose.connect("mongodb://localhost:27017/animeDB", {useNewUrlParser: true, useUnifiedTopology: false});
+mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: false});
 //create a schema to use to create a document
 const scoreSchema = {
   username: String,

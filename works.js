@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-mongoose.connect("mongodb://localhost:27017/animeDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 const animeDocSchema = {
   name: String,
   type: String,

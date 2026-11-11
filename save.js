@@ -3,7 +3,7 @@ const xml2js = require("xml2js");//ANN servers send back xml, this npm package i
 const util = require("util");
 const mongoose = require("mongoose");
 const performance = require('perf_hooks').performance;
-mongoose.connect("mongodb://localhost:27017/animeDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 //the pupose of this file is to interact with the API automatically, and save all of the anime information into my local database
 
 const animeDocSchema = {

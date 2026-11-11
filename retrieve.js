@@ -5,7 +5,7 @@ const util = require("util");
 //deal with duplicates. The API had duplicates in the system some have releaseDates and some don't. Get rid of all the duplicates without release dates
 //and in general
 //problem: i use the earliest date root to match with one from the database. However, if sombody picked 2010 and 1990
-mongoose.connect("mongodb://localhost:27017/animeDB", {useNewUrlParser: true, useUnifiedTopology: true});
+mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
 const animeDocSchema = {
   name: String,
   type: String,
