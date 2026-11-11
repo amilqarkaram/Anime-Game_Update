@@ -1,16 +1,17 @@
 const { Anime, Manga } = require(__dirname + "/db.js");
 const { buildQuestions } = require(__dirname + "/lib/quiz.js");
-const { MIN_VOTES } = require(__dirname + "/lib/settings.js");
+const { MIN_VOTES, EXCLUDED_GENRES } = require(__dirname + "/lib/settings.js");
 const { filterByDecades, uniqueTitles, canBeQuestion, hasName } = require(__dirname + "/lib/titles.js");
 
-// All titles of one type that have any of the chosen genres and enough votes
+// All titles of one type that have any of the chosen genres (and none of the
+// excluded ones) and enough votes
 // for the difficulty (more votes = better known = easier).
 // One query with $in returns each title once, even when it has several of the
 // chosen genres; before, one query per genre was concatenated, so a title
 // tagged "action" and "comedy" was in the pool twice and could show up twice
 // among the choices of a question.
 function findTitles(type, genres, difficulty) {
-  const query = { genres: { $in: genres } };
+  const query = { genres: { $in: genres, $nin: EXCLUDED_GENRES } };
   const min = MIN_VOTES[difficulty];
   if (min > 0) {
     query.nbVotes = { $gte: min };
