@@ -8,6 +8,7 @@ const saveScore = require(__dirname + "/save-score.js");
 const settingsForm = require(__dirname + "/lib/settings.js");
 
 const numAnswers = 4; // four choices per question
+const TOTAL_QUESTIONS = 10;
 
 // Everything that belongs to one player lives in their session (one per
 // browser), not in global variables shared by every visitor of the server.
@@ -58,11 +59,24 @@ function createApp(options = {}) {
 
   // The Play button submits the whole settings form in one request, so the
   // server always has the player's choices before the first question is built.
-  app.post("/start", function (req, res) {
+  app.post("/start", async function (req, res) {
     const { settings, error } = settingsForm.parseSettings(req.body);
     if (error) {
       // show the form again, with their choices still ticked
       return renderIndex(res.status(400), settings, error);
+    }
+    // all questions are created as soon as Play is clicked; with both anime
+    // and manga chosen, half of the questions come from each
+    const perType = Math.ceil(TOTAL_QUESTIONS / settings.types.length);
+    const questions = [];
+    for (const type of settings.types) {
+      const forType = await retrieve.createAnswers(settings.difficulty, numAnswers, type, settings.genres, perType, settings.decades);
+      if (forType.length === 0) {
+        return renderIndex(res.status(400), settings,
+          "Not enough " + (type === "anime" ? "anime" : "manga") + " match these choices to make a question. " +
+          "Try adding genres or decades, or pick Master to include less popular titles.");
+      }
+      questions.push(...forType);
     }
     const game = newGame();
     game.username = settings.username;
@@ -70,6 +84,12 @@ function createApp(options = {}) {
     game.genres = settings.genres;
     game.difficulty = settings.difficulty;
     game.years = settings.decades;
+    // only the fields the page needs are kept in the session
+    game.questions = questions.slice(0, TOTAL_QUESTIONS).map((q) => ({
+      answer1: pick(q.answer1), answer2: pick(q.answer2),
+      answer3: pick(q.answer3), answer4: pick(q.answer4),
+    }));
+    game.numQuestions = game.questions.length;
     game.questionNumber = 1;
     req.session.game = game;
     res.redirect("/game");
@@ -83,29 +103,6 @@ function createApp(options = {}) {
     console.log("Question Number: " + game.questionNumber);
 
     if (!game.completedQuestions.includes(game.questionNumber) && game.questionNumber <= game.numQuestions) {
-      // right after "play" is clicked, all questions and answers are created
-      if (game.questionNumber === 1 && !game.questions) {
-        const onlyGenres = game.genres;
-        let questions = [];
-        // if the user chose both anime and manga, 5 questions come from each
-        const wantsAnime = game.types.includes("anime");
-        const wantsManga = game.types.includes("manga");
-        if (wantsAnime && wantsManga) {
-          game.numQuestions = 10;
-          questions = await retrieve.createAnswers(game.difficulty, numAnswers, "anime", onlyGenres, 5, game.years);
-          questions.push(...await retrieve.createAnswers(game.difficulty, numAnswers, "manga", onlyGenres, 5, game.years));
-        } else if (wantsAnime) {
-          questions = await retrieve.createAnswers(game.difficulty, numAnswers, "anime", onlyGenres, 10, game.years);
-        } else if (wantsManga) {
-          questions = await retrieve.createAnswers(game.difficulty, numAnswers, "manga", onlyGenres, 10, game.years);
-        }
-        // only the fields the page needs are kept in the session
-        game.questions = questions.map((q) => ({
-          answer1: pick(q.answer1), answer2: pick(q.answer2),
-          answer3: pick(q.answer3), answer4: pick(q.answer4),
-        }));
-      }
-
       const root = game.questions[game.questionNumber - 1];
       game.completedQuestions.push(game.questionNumber);
       // the first answer is always the correct one, so shuffle the choices

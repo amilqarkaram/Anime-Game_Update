@@ -5,6 +5,7 @@ const util = require("util");
 //and in general
 //problem: i use the earliest date root to match with one from the database. However, if sombody picked 2010 and 1990
 const { Anime, Manga } = require(__dirname + "/db.js");
+const { buildQuestions } = require(__dirname + "/lib/quiz.js");
 // this function will remove any years not specified
 function removeUnqualifiedYears(years,data){
 return new Promise((resolve, reject) => {
@@ -78,8 +79,8 @@ function find(difficulty, dataVar, genres,i,type,years){
 }
 module.exports = {
 
-// Builds numQ questions of numAns titles each; the first title of every
-// question is the right answer. As an async function, any database error is
+// Builds up to numQ questions of numAns titles each (fewer if not enough
+// titles match); the first title of every question is the right answer. As an async function, any database error is
 // passed back to the caller (and on to the error page) instead of escaping as
 // an unhandled rejection that crashes the server.
 createAnswers: async function(difficulty, numAns, type, genres, numQ, years){
@@ -89,17 +90,7 @@ createAnswers: async function(difficulty, numAns, type, genres, numQ, years){
     filteredData = await find(difficulty, filteredData, genres, i, type, years);
   }
   await removeUnqualifiedYears(years, filteredData);
-  // create numQ random questions with numAns random answers each
-  const questions = [];
-  for(let i = 0; i < numQ; ++i){
-    const ans = [];
-    for(let j = 0; j < numAns; ++j){
-      const randNum = Math.floor(Math.random() * filteredData.length);
-      ans.push(filteredData[randNum]);
-      filteredData.splice(randNum, 1);
-    }
-    questions.push({ answer1: ans[0], answer2: ans[1], answer3: ans[2], answer4: ans[3] });
-  }
-  return questions;
+  return buildQuestions(filteredData, numQ, numAns)
+    .map((ans) => ({ answer1: ans[0], answer2: ans[1], answer3: ans[2], answer4: ans[3] }));
 }
 };
