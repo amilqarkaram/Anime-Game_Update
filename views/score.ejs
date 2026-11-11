@@ -3,23 +3,26 @@
   <head>
     <meta charset="utf-8">
     <title>Your Score</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="styles-score.css">
+    <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/styles-score.css">
   </head>
   <body>
-
+    <h1>ScoreBoard</h1>
+    <h2 class="your-score"><%= username %>, you scored <%= score %> / <%= numQuestions %></h2>
     <table>
-        <h1>ScoreBoard</h1>
       <tr>
+        <td><h1>#</h1></td>
         <td><h1>Username</h1></td>
         <td><h1>Score</h1></td>
       </tr>
-        <% for(var i = 0; i < scoreboard.length; ++i){ %>
-          <tr>
-            <td><h1><%=scoreboard[i].username%></h1></td>
-            <td><h1><%=scoreboard[i].score%> / <%=numQuestions%></h1></td>
-          </tr>
-        <% } %>
+      <% scoreboard.forEach(function (row, i) { %>
+        <tr class="<%= String(row._id) === myScoreId ? "mine" : "" %>">
+          <td><h1><%= i + 1 %></h1></td>
+          <td><h1><%= row.username %></h1></td>
+          <td><h1><%= row.score %> / <%= row.total || 10 %></h1></td>
+        </tr>
+      <% }) %>
     </table>
+    <a class="btn btn-light btn-lg play-again" href="/">Play again</a>
   </body>
 </html>

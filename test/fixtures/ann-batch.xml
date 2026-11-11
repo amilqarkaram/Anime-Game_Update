@@ -1,0 +1,22 @@
+<ann>
+<anime id="1" gid="1234" type="TV" name="Angel Links" precision="TV" generated-on="2026-11-01T00:00:00Z">
+<related-next rel="adaptation" id="2"/>
+<info gid="1" type="Picture" src="https://cdn.animenewsnetwork.com/thumbnails/fit200x200/encyc/A1-28.jpg" width="141" height="200">
+<img src="https://cdn.animenewsnetwork.com/thumbnails/fit200x200/encyc/A1-28.jpg" width="141" height="200"/>
+</info>
+<info gid="2" type="Main title" lang="EN">Angel Links</info>
+<info gid="3" type="Genres">action</info>
+<info gid="4" type="Genres">Science Fiction</info>
+<info gid="5" type="Themes">space</info>
+<info gid="6" type="Plot Summary">Li Meifon runs a free security service in space.</info>
+<info gid="7" type="Vintage">1999-04-06 to 1999-09-28</info>
+<ratings nb_votes="1153" weighted_score="5.7" bayesian_score="5.75"/>
+<release date="2001-04-06" href="/encyclopedia/releases.php?id=1">Angel Links DVD 1</release>
+</anime>
+<warning>no result for title=3</warning>
+<manga id="4" gid="999" type="manga" name="Test Manga" precision="manga" generated-on="2026-11-01T00:00:00Z">
+<info gid="1" type="Main title" lang="JA">Test Manga</info>
+<info gid="2" type="Genres">comedy</info>
+<info gid="3" type="Vintage">2015-05-01</info>
+</manga>
+</ann>

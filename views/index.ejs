@@ -1,10 +1,15 @@
+<%
+  // the choices on this page come from lib/settings.js, and `form` holds what
+  // the player picked last time so a page shown with an error keeps them
+  const has = (field, value) => (form[field] || []).includes(value);
+%>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
     <title>Anime Game</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <link rel="stylesheet" href="styles-index.css">
+    <link rel="stylesheet" href="/vendor/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/styles-index.css">
   </head>
   <body>
     <header>
@@ -16,72 +21,53 @@
       <p>Hello fellow anime enthusiasts! I created this game as a fun way to test the breadth of your knowledge! <br></p>
       <p>First, pick a few genres that you want to test your expertise in!</p>
     </div>
-    <form action="/" method="post">
-      <div class= "genresTable">
-        <div class = "row no-gutters">
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "action" name="genres">action</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "comedy" name="genres">comedy</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "adventure"name="genres">adventure</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "drama" name="genres">drama</button></div>
-        </div>
-        <div class = "row no-gutters">
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "slice of life" name="genres">slice of life</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "erotica" name="genres">erotica</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "fantasy" name="genres">fantasy</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "magic" name="genres">magic</button></div>
-        </div>
-        <div class = "row no-gutters">
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "supernatural" name="genres">supernatural</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "horror" name="genres">horror</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "mystery" name="genres">mystery</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "psychological"name="genres">psychological</button></div>
-        </div>
+    <% if (error) { %>
+      <div class="alert alert-warning error-message" role="alert"><%= error %></div>
+    <% } %>
+    <!-- every choice is a real form field, so pressing Play sends them all in one request -->
+    <form action="/start" method="post">
+      <div class="genresTable">
+        <% for (let i = 0; i < genres.length; i += 4) { %>
         <div class="row no-gutters">
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "romance" name="genres">romance</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "science fiction" name="genres">science fiction</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "thriller" name="genres">thriller</button></div>
-          <div class = "col-12 col-md-3"><button class = "genres btn btn-success shadow-none"type="button" value = "tournament" name="genres">tournament</button></div>
+          <% for (const g of genres.slice(i, i + 4)) { %>
+          <div class="col-12 col-md-3"><label class="toggle"><input type="checkbox" name="genres" value="<%= g %>" <%= has("genres", g) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= g %></span></label></div>
+          <% } %>
         </div>
+        <% } %>
       </div>
       <p>Which do you know better?</p>
       <div class="mOrA">
         <div class="row no-gutters">
-          <div class = "col-12 col-md-6"><button class = "genres btn btn-success shadow-none"type="button" value = "anime" name="genres">Anime</button></div>
-          <div class = "col-12 col-md-6"><button class = "genres btn btn-success shadow-none"type="button" value = "manga" name="genres">Manga</button></div>
+          <% for (const [value, text] of [["anime", "Anime"], ["manga", "Manga"]]) { %>
+          <div class="col-12 col-md-6"><label class="toggle"><input type="checkbox" name="types" value="<%= value %>" <%= has("types", value) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= text %></span></label></div>
+          <% } %>
         </div>
       </div>
       <p>What level are you at?</p>
       <div class="mOrA">
         <div class="row no-gutters">
-          <div class = "col-12 col-md-4"><button class = "difficulty btn btn-success shadow-none"type="button" value = "difficulty" name="button">Normal</button></div>
-          <div class = "col-12 col-md-4"><button class = "difficulty btn btn-success shadow-none"type="button" value = "difficulty" name="button">Expert</button></div>
-          <div class = "col-12 col-md-4"><button class = "difficulty btn btn-success shadow-none"type="button" value = "difficulty" name="button">Master</button></div>
+          <% for (const d of difficulties) { %>
+          <div class="col-12 col-md-4"><label class="toggle"><input type="radio" name="difficulty" value="<%= d %>" <%= (form.difficulty || difficulties[0]) === d ? "checked" : "" %>><span class="difficulty btn btn-success shadow-none"><%= d[0].toUpperCase() + d.slice(1) %></span></label></div>
+          <% } %>
         </div>
       </div>
       <p>When were your weeb years?</p>
       <div class="genresTable">
         <div class="row no-gutters">
-          <div class = "col-12 col-md-4"><button class = "genres btn btn-success shadow-none"type="button" value = "years" name="2010-btn">> 2010</button></div>
-          <div class = "col-12 col-md-4"><button class = "genres btn btn-success shadow-none"type="button" value = "years" name="2000-btn">>2000</button></div>
-          <div class = "col-12 col-md-4"><button class = "genres btn btn-success shadow-none"type="button" value = "years" name="1990-btn">>1990</button></div>
-        </div>
-        <div class="row no-gutters">
-          <div class = "col-12 col-md-6"><button class = "genres btn btn-success shadow-none"type="button" value = "years" name="1980-btn">>1980</button></div>
-          <div class = "col-12 col-md-6"><button class = "genres btn btn-success shadow-none"type="button" value = "years" name="1970-btn">>1970</button></div>
+          <% for (const d of decades) { %>
+          <div class="col-12 col-md-4"><label class="toggle"><input type="checkbox" name="decades" value="<%= d %>" <%= has("decades", d) ? "checked" : "" %>><span class="genres btn btn-success shadow-none"><%= d %>s</span></label></div>
+          <% } %>
         </div>
       </div>
       <p>Finally, put in your username so you can showoff your score!</p>
       <div class="inputField">
-        <input type="text" name="username" placeholder="Player Name" autocomplete = "off">
-        <button class = "btn btn-success btn-sm" type="button" name="button" value = "username">Submit</button>
+        <input type="text" name="username" placeholder="Player Name" autocomplete="off" maxlength="<%= maxUsername %>" value="<%= form.username === "Anonymous" ? "" : (form.username || "") %>">
       </div>
       <div class="play">
         <h6>Whenever you're ready, click play below!</h6>
-        <button class = "btn btn-success btn-lg" type="button" name="button" value = "play">Play!</button>
+        <button class="btn btn-success btn-lg" type="submit">Play!</button>
       </div>
     </form>
   </div>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="extra-index.js" charset="utf-8"></script>
   </body>
 </html>
