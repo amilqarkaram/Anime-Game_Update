@@ -7,6 +7,7 @@ const retrieve = require(__dirname + "/retrieve.js");
 const saveScore = require(__dirname + "/save-score.js");
 const settingsForm = require(__dirname + "/lib/settings.js");
 const { shuffle } = require(__dirname + "/lib/quiz.js");
+const { hasImage } = require(__dirname + "/lib/titles.js");
 
 const numAnswers = 4; // four choices per question
 const TOTAL_QUESTIONS = 10;
@@ -161,7 +162,7 @@ function toQuestion(q) {
   const correct = q.answer1;
   const choices = shuffle([q.answer1, q.answer2, q.answer3, q.answer4].map((t) => t.name));
   return {
-    imgSrc: correct.imgSrc,
+    imgSrc: hasImage(correct) ? correct.imgSrc : null,
     plotSummary: correct.plotSummary,
     choices,
     answer: choices.indexOf(correct.name),

@@ -1,7 +1,7 @@
 const { Anime, Manga } = require(__dirname + "/db.js");
 const { buildQuestions } = require(__dirname + "/lib/quiz.js");
 const { MIN_VOTES } = require(__dirname + "/lib/settings.js");
-const { filterByDecades, uniqueTitles } = require(__dirname + "/lib/titles.js");
+const { filterByDecades, uniqueTitles, canBeQuestion, hasName } = require(__dirname + "/lib/titles.js");
 
 // All titles of one type that have any of the chosen genres and enough votes
 // for the difficulty (more votes = better known = easier).
@@ -28,8 +28,8 @@ module.exports = {
   // (and on to the error page) instead of crashing the server.
   createAnswers: async function (difficulty, numAns, type, genres, numQ, years) {
     let pool = await findTitles(type, genres, difficulty);
-    pool = uniqueTitles(filterByDecades(pool, years));
-    return buildQuestions(pool, numQ, numAns)
+    pool = uniqueTitles(filterByDecades(pool.filter(hasName), years));
+    return buildQuestions(pool, numQ, numAns, Math.random, canBeQuestion)
       .map((ans) => ({ answer1: ans[0], answer2: ans[1], answer3: ans[2], answer4: ans[3] }));
   },
 };
