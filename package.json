@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "migrate": "node scripts/migrate.js"
+    "migrate": "node scripts/migrate.js",
+    "scrape": "node scripts/scrape.js"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +17,6 @@
     "express": "^5.3.0",
     "express-session": "^1.19.0",
     "mongoose": "^9.12.1",
-    "xml2js": "^0.4.23"
+    "xml2js": "^0.6.2"
   }
 }

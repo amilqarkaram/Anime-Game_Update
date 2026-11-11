@@ -7,7 +7,7 @@ const { MONGODB_URI } = require("./config");
 const titleSchema = new mongoose.Schema({
   name: String,
   type: String,
-  id: String,
+  id: Number, // the ANN encyclopedia id
   imgSrc: String,
   plotSummary: String,
   // numbers, so "at least 1000 votes" compares as numbers rather than text
@@ -19,6 +19,10 @@ const titleSchema = new mongoose.Schema({
   releaseDates: [String],
 });
 
+// one document per ANN id, so re-running the scraper updates instead of
+// adding duplicates
+titleSchema.index({ id: 1 }, { unique: true });
+
 const scoreSchema = new mongoose.Schema({
   username: String,
   score: String,
@@ -28,17 +32,19 @@ const Anime = mongoose.model("anime", titleSchema, "animes");
 const Manga = mongoose.model("manga", titleSchema, "mangas");
 const Score = mongoose.model("score", scoreSchema, "scores");
 
-// True if the database still has titles saved by the old scraper, where the
-// vote counts are text. Those need `npm run migrate` before difficulty works.
+// True if the database still has titles saved by the old scraper, where ids
+// and vote counts are text. Those need `npm run migrate`.
 async function needsMigration() {
   for (const Model of [Anime, Manga]) {
-    if (await Model.exists({ nbVotes: { $type: "string" } })) return true;
+    if (await Model.exists({ $or: [{ nbVotes: { $type: "string" } }, { id: { $type: "string" } }] })) return true;
   }
   return false;
 }
 
 function connect(uri = MONGODB_URI) {
-  return mongoose.connect(uri);
+  // indexes are created explicitly by the scraper and the migration, so an
+  // old database with duplicate ids does not trip the unique index at startup
+  return mongoose.connect(uri, { autoIndex: false });
 }
 
 function disconnect() {
