@@ -18,6 +18,7 @@
   </div>
   <table class = "answerChoices">
     <form action="/game" method="post">
+      <input type="hidden" name="question" value="<%= questionIndex %>">
       <div class="row">
         <div class= "col-12 col-lg-6 button">
           <button class = "btn btn-light btn-lg"type="submit" name="button" value = <%= val1 %> ><%= answer1 %></button>

@@ -6,24 +6,22 @@ const db = require(__dirname + "/db.js");
 const retrieve = require(__dirname + "/retrieve.js");
 const saveScore = require(__dirname + "/save-score.js");
 const settingsForm = require(__dirname + "/lib/settings.js");
+const { shuffle } = require(__dirname + "/lib/quiz.js");
 
 const numAnswers = 4; // four choices per question
 const TOTAL_QUESTIONS = 10;
 
 // Everything that belongs to one player lives in their session (one per
 // browser), not in global variables shared by every visitor of the server.
-function newGame() {
+//   questions: [{ imgSrc, plotSummary, choices: [4 names], answer: index }]
+//   current:   index of the question being shown
+function newGame(settings, questions) {
   return {
-    types: [],
-    genres: [],
-    years: [],
-    difficulty: "Normal",
-    username: "",
-    questions: null,
-    numQuestions: 10,
-    questionNumber: 0,
-    completedQuestions: [],
+    username: settings.username,
+    questions,
+    current: 0,
     score: 0,
+    scoreSaved: false,
   };
 }
 
@@ -78,54 +76,31 @@ function createApp(options = {}) {
       }
       questions.push(...forType);
     }
-    const game = newGame();
-    game.username = settings.username;
-    game.types = settings.types;
-    game.genres = settings.genres;
-    game.difficulty = settings.difficulty;
-    game.years = settings.decades;
-    // only the fields the page needs are kept in the session
-    game.questions = questions.slice(0, TOTAL_QUESTIONS).map((q) => ({
-      answer1: pick(q.answer1), answer2: pick(q.answer2),
-      answer3: pick(q.answer3), answer4: pick(q.answer4),
-    }));
-    game.numQuestions = game.questions.length;
-    game.questionNumber = 1;
+    // the choices are shuffled once, here, so reloading a question shows it
+    // exactly as before
+    const game = newGame(settings, questions.slice(0, TOTAL_QUESTIONS).map(toQuestion));
     req.session.game = game;
     res.redirect("/game");
   });
 
-  app.get("/game", async function (req, res) {
+  // Shows the current question. Reloading the page shows the same question
+  // again; it no longer skips ahead or ends the quiz.
+  app.get("/game", function (req, res) {
     const game = req.session.game;
-    if (!game || game.questionNumber === 0) {
+    if (!game) {
       return res.redirect("/");
     }
-    console.log("Question Number: " + game.questionNumber);
-
-    if (!game.completedQuestions.includes(game.questionNumber) && game.questionNumber <= game.numQuestions) {
-      const root = game.questions[game.questionNumber - 1];
-      game.completedQuestions.push(game.questionNumber);
-      // the first answer is always the correct one, so shuffle the choices
-      const tempAns = [root.answer1.name, root.answer2.name, root.answer3.name, root.answer4.name];
-      const randAns = [];
-      const vals = [];
-      for (let i = 0; i < numAnswers; ++i) {
-        const rand = Math.floor(tempAns.length * Math.random());
-        randAns.push(tempAns[rand]);
-        vals.push(tempAns[rand] === root.answer1.name ? "correct" : "incorrect");
-        tempAns.splice(rand, 1);
-      }
-      return res.render("game", {
-        imageSrc: root.answer1.imgSrc, src: root.answer1.plotSummary,
-        answer1: randAns[0], answer2: randAns[1], answer3: randAns[2], answer4: randAns[3],
-        val1: vals[0], val2: vals[1], val3: vals[2], val4: vals[3],
-      });
+    if (game.current >= game.questions.length) {
+      return res.redirect("/score");
     }
-
-    // otherwise the quiz is over: save the score and show the scoreboard
-    await saveScore.addInfo(game.username, game.score);
-    const arr = await saveScore.getInfo();
-    res.render("score", { scoreboard: arr, username: game.username, score: game.score, numQuestions: game.numQuestions });
+    const q = game.questions[game.current];
+    res.render("game", {
+      questionIndex: game.current,
+      imageSrc: q.imgSrc, src: q.plotSummary,
+      answer1: q.choices[0], answer2: q.choices[1], answer3: q.choices[2], answer4: q.choices[3],
+      val1: q.answer === 0 ? "correct" : "incorrect", val2: q.answer === 1 ? "correct" : "incorrect",
+      val3: q.answer === 2 ? "correct" : "incorrect", val4: q.answer === 3 ? "correct" : "incorrect",
+    });
   });
 
   app.post("/game", function (req, res) {
@@ -133,12 +108,40 @@ function createApp(options = {}) {
     if (!game) {
       return res.redirect("/");
     }
-    if (req.body.button === "correct") {
-      ++game.score;
+    // Only an answer to the question currently shown counts. A double click,
+    // or going back and answering an old question again, changes nothing.
+    if (Number(req.body.question) === game.current && game.current < game.questions.length) {
+      if (req.body.button === "correct") {
+        ++game.score;
+      }
+      ++game.current;
     }
-    ++game.questionNumber;
     // wait 1 second before redirecting, so the player can see if they were right or wrong
     req.session.save(() => setTimeout(() => res.redirect("/game"), 1000));
+  });
+
+  // The score is saved the first time this page is shown for a finished game;
+  // reloading it shows the board again without adding another row.
+  app.get("/score", async function (req, res) {
+    const game = req.session.game;
+    if (!game) {
+      return res.redirect("/");
+    }
+    if (game.current < game.questions.length) {
+      return res.redirect("/game");
+    }
+    if (!game.scoreSaved) {
+      game.scoreSaved = true;
+      await new Promise((resolve, reject) => req.session.save((err) => (err ? reject(err) : resolve())));
+      try {
+        await saveScore.addInfo(game.username, game.score);
+      } catch (err) {
+        game.scoreSaved = false; // let a reload try again
+        throw err;
+      }
+    }
+    const arr = await saveScore.getInfo();
+    res.render("score", { scoreboard: arr, username: game.username, score: game.score, numQuestions: game.questions.length });
   });
 
   // Anything unexpected (database down, a bug) shows a page with a way back
@@ -152,8 +155,17 @@ function createApp(options = {}) {
   return app;
 }
 
-function pick(title) {
-  return { name: title.name, imgSrc: title.imgSrc, plotSummary: title.plotSummary };
+// question as stored in the session: the right answer is answer1 in what
+// createAnswers returns; the choices are shuffled and its new position kept
+function toQuestion(q) {
+  const correct = q.answer1;
+  const choices = shuffle([q.answer1, q.answer2, q.answer3, q.answer4].map((t) => t.name));
+  return {
+    imgSrc: correct.imgSrc,
+    plotSummary: correct.plotSummary,
+    choices,
+    answer: choices.indexOf(correct.name),
+  };
 }
 
 module.exports = { createApp };
