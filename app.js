@@ -1,7 +1,6 @@
 const express = require("express");
 const session = require("express-session");
 const { MongoStore } = require("connect-mongo");
-const util = require("util");
 const config = require(__dirname + "/config.js");
 const db = require(__dirname + "/db.js");
 const retrieve = require(__dirname + "/retrieve.js");
@@ -13,8 +12,9 @@ const numAnswers = 4; // four choices per question
 // browser), not in global variables shared by every visitor of the server.
 function newGame() {
   return {
+    types: [],
     genres: [],
-    years: ["2010"],
+    years: [],
     difficulty: "Normal",
     username: "",
     questions: null,
@@ -42,28 +42,21 @@ function createApp(options = {}) {
   }));
 
   app.get("/", function (req, res) {
-    req.session.game = newGame();
     res.render("index");
   });
 
-  app.post("/", function (req, res) {
-    const game = req.session.game || (req.session.game = newGame());
-    const value = req.body.button;
-    console.log(util.inspect(req.body, false, null));
-    if (value === "ajax-info") {
-      game.genres = req.body.genres;
-      game.difficulty = req.body.difficulty;
-      game.years = req.body.years;
-      res.sendStatus(204);
-    } else if (value === "play") {
-      ++game.questionNumber;
-      res.redirect("/game");
-    } else if (value === "username") {
-      game.username = req.body.input;
-      res.sendStatus(204);
-    } else {
-      res.sendStatus(400);
-    }
+  // The Play button submits the whole settings form in one request, so the
+  // server always has the player's choices before the first question is built.
+  app.post("/start", function (req, res) {
+    const game = newGame();
+    game.username = req.body.username;
+    game.types = toArray(req.body.types);
+    game.genres = toArray(req.body.genres);
+    game.difficulty = req.body.difficulty;
+    game.years = toArray(req.body.decades);
+    game.questionNumber = 1;
+    req.session.game = game;
+    res.redirect("/game");
   });
 
   app.get("/game", async function (req, res) {
@@ -76,12 +69,11 @@ function createApp(options = {}) {
     if (!game.completedQuestions.includes(game.questionNumber) && game.questionNumber <= game.numQuestions) {
       // right after "play" is clicked, all questions and answers are created
       if (game.questionNumber === 1 && !game.questions) {
-        const genres = [...game.genres];
+        const onlyGenres = game.genres;
         let questions = [];
         // if the user chose both anime and manga, 5 questions come from each
-        const wantsAnime = genres.includes("anime");
-        const wantsManga = genres.includes("manga");
-        const onlyGenres = genres.filter((g) => g !== "anime" && g !== "manga");
+        const wantsAnime = game.types.includes("anime");
+        const wantsManga = game.types.includes("manga");
         if (wantsAnime && wantsManga) {
           game.numQuestions = 10;
           questions = await retrieve.createAnswers(game.difficulty, numAnswers, "anime", onlyGenres, 5, game.years);
@@ -137,6 +129,12 @@ function createApp(options = {}) {
   });
 
   return app;
+}
+
+// a form field sent once arrives as a string, sent several times as an array
+function toArray(value) {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
 }
 
 function pick(title) {
