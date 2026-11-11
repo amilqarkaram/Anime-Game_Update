@@ -1,26 +1,10 @@
-const mongoose = require("mongoose");
 const util = require("util");
 //// FOR SOME REASON THE "NONE" genres is not being filtered out, that is the current problem, when filtering the data
 //for the years, "none is not being counted as an unqualified year"
 //deal with duplicates. The API had duplicates in the system some have releaseDates and some don't. Get rid of all the duplicates without release dates
 //and in general
 //problem: i use the earliest date root to match with one from the database. However, if sombody picked 2010 and 1990
-mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
-const animeDocSchema = {
-  name: String,
-  type: String,
-  id: String,
-  imgSrc: String,
-  plotSummary: String,
-  nbVotes: String,
-  weightedScore: String,
-  bayesianScore: String,
-  genres: [String],
-  releaseDates:[String]
-};
-// Creted two models from the defined schema
-const Anime = mongoose.model('anime',animeDocSchema,'animes');
-const Manga = mongoose.model('manga',animeDocSchema,'mangas');
+const { Anime, Manga } = require(__dirname + "/db.js");
 // this function will remove any years not specified
 function removeUnqualifiedYears(years,data){
 return new Promise((resolve, reject) => {
@@ -85,33 +69,12 @@ function find(difficulty, dataVar, genres,i,type,years){
     min = 0;
   }
   console.log("find function runs ");
-  return new Promise(function(resolve, reject){
-    if(type === "anime"){
-      // if(genres[i] === "erotica") need to filter out erotica
-      // filters through all anime based on genres and number of votes
-    Anime.find({genres: genres[i],nbVotes:{$gte:min}}, function(err, data){
-      //var filteredData = [];
-      if(err){console.log("There was an error: " + err);}
-      else{
-        dataVar = dataVar.concat(data);
-        console.log("length of filteredData: " + data.length);
-        // console.log(util.inspect(data, false, null));
-        resolve(dataVar);
-        };
-      });
-    }
-    else if(type === "manga"){
-      Manga.find({genres: genres[i],nbVotes:{$gte: min}}, function(err, data){
-        //var filteredData = [];
-        if(err){console.log("There was an error: " + err);}
-        else{
-          dataVar = dataVar.concat(data);
-          console.log("length of filteredData: " + data.length);
-          resolve(dataVar);
-          };
-        });
-    }
-        });
+  const Model = type === "anime" ? Anime : Manga;
+  // filters through all titles based on genre and number of votes
+  return Model.find({genres: genres[i], nbVotes: {$gte: min}}).then(function(data){
+    console.log("length of filteredData: " + data.length);
+    return dataVar.concat(data);
+  });
 }
 module.exports = {
 

@@ -1,35 +1,20 @@
 const https = require("https");//used to send get response to external servers
 const xml2js = require("xml2js");//ANN servers send back xml, this npm package is to convert xml into a javascript object
 const util = require("util");
-const mongoose = require("mongoose");
 const performance = require('perf_hooks').performance;
-mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: true});
-//the pupose of this file is to interact with the API automatically, and save all of the anime information into my local database
-
-const animeDocSchema = {
-  name: String,
-  type: String,
-  id: String,
-  imgSrc: String,
-  plotSummary: String,
-  nbVotes: String,
-  weightedScore: String,
-  bayesianScore: String,
-  genres: [String],
-  releaseDates: [String]
-};
+const db = require(__dirname + "/db.js");
+const { Anime, Manga } = db;
+db.connect();
 let name, ratings, type, id, imgSrc, nbVotes, weightedScore, bayesianScore;
-const Anime = mongoose.model("anime",animeDocSchema);
-const Manga = mongoose.model("manga",animeDocSchema);
 let arrAnime = [];
 let arrManga = [];
 var i  = 0;
 // this findPlace function, finds the last id that was saved from API
 function findPlace(){
 return new Promise(function(resolve,reject){
-Anime.find(function(err,res){
+Anime.find().then(function(res){
 arrAnime = res;
-Manga.find(function(err,result){
+Manga.find().then(function(result){
 arrManga = result;
 console.log("anime length: " + arrAnime.length);
 if(arrAnime.length !== 0 && arrManga.length !== 0){

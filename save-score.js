@@ -1,13 +1,5 @@
-const mongoose = require("mongoose");
-// connecting to specific animeDB database
-mongoose.connect(require(__dirname + "/config.js").MONGODB_URI, {useNewUrlParser: true, useUnifiedTopology: false});
-//create a schema to use to create a document
-const scoreSchema = {
-  username: String,
-  score: String
-};
-//again using the schema and the model method ive create a document to save
-const Score = mongoose.model("score",scoreSchema);
+// models and the database connection live in db.js
+const { Score } = require(__dirname + "/db.js");
 module.exports = {
 
 addInfo: function(name,score){
@@ -21,16 +13,7 @@ return info.save();
 },
 getInfo: function(){
   // a promise is returned that will return an array of the documents
-return new Promise(function(resolve, reject){
-  Score.find(function(err,data){
-    if(err){console.log("There was an error: " + err);}
-    else{
-      //console.log(data);
-      resolve(data);
-    }
-  });
-  }
-  );
+return Score.find().exec();
 },
 
 

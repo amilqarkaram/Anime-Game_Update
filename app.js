@@ -5,6 +5,8 @@ const bodyParser = require("body-parser");
 const ejs = require("ejs");//required to embedd javascript. In other words, dynamically change html by sending data from server and filling in an html template
 //const annData = require(__dirname + "/ANN.js");
 const retrieve = require(__dirname + "/retrieve.js");
+const db = require(__dirname + "/db.js");
+db.connect();
 const app = express();
 const numAnswers = 4;//four choices
 const port = 3000;// port number
