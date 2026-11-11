@@ -1,0 +1,49 @@
+body{
+  text-align: center;
+  background-color:#28a745;
+  margin: 0 auto 0 auto;
+}
+
+.img{
+width: 25%;
+height: 25%;
+}
+.image{
+  margin-top: 30px;
+  margin-bottom: 40px;
+}
+.btn{
+  margin-top: 10%;
+  margin-bottom: 10%;
+  display:block;
+  width: 300px;
+  height: 100px;
+  margin-right:auto;
+  margin-left: auto;
+}
+.row{
+  margin:auto;
+}
+.answerChoices{
+  margin-right:auto;
+  margin-left: auto;
+  border-collapse: separate;
+  border-spacing: 10px;
+}
+.game{
+  background-color:#DBDCDC;
+  border-style: double;
+  border-radius: 25px;
+  border-width: 5px;
+  width: 60%;
+  margin-right:auto;
+  margin-left: auto;
+}
+/* put answer choices into a table
+look into border-spacing property */
+@media only screen and (max-width: 1300px) {
+  .btn{
+    width: 250px;
+    height: 150px;
+  }
+}

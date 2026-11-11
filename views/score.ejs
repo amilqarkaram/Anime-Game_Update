@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>Your Score</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <link rel="stylesheet" href="styles-score.css">
+  </head>
+  <body>
+
+    <table>
+        <h1>ScoreBoard</h1>
+      <tr>
+        <td><h1>Username</h1></td>
+        <td><h1>Score</h1></td>
+      </tr>
+        <% for(var i = 0; i < scoreboard.length; ++i){ %>
+          <tr>
+            <td><h1><%=scoreboard[i].username%></h1></td>
+            <td><h1><%=scoreboard[i].score%> / <%=numQuestions%></h1></td>
+          </tr>
+        <% } %>
+    </table>
+  </body>
+</html>

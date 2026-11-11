@@ -1,0 +1,10 @@
+body{
+  text-align:center;
+  background-color: #28a745;
+}
+table{
+  margin:auto;
+  background-color: #DBDCDC;
+  border-style: solid;
+  border-width: thin;
+}
