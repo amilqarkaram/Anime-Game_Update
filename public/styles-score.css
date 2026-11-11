@@ -8,3 +8,16 @@ table{
   border-style: solid;
   border-width: thin;
 }
+td{
+  padding: 0 20px;
+}
+.mine{
+  background-color: #ffeeba;
+}
+.your-score{
+  color: #fff;
+  margin: 20px 0;
+}
+.play-again{
+  margin: 30px;
+}

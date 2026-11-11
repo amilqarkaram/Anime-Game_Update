@@ -1,21 +1,14 @@
-// models and the database connection live in db.js
+// Saving and reading the scoreboard.
 const { Score } = require(__dirname + "/db.js");
+
 module.exports = {
+  // returns the saved document (a promise)
+  addInfo: function (username, score, total) {
+    return Score.create({ username, score, total });
+  },
 
-addInfo: function(name,score){
-let info = new Score({
-  username: name,
-  score: score
-});
-//save the docuement to the database
-// info.save() also returnd a promise which alows my to use it in the async function
-return info.save();
-},
-getInfo: function(){
-  // a promise is returned that will return an array of the documents
-return Score.find().exec();
-},
-
-
-
+  // the best scores first; ties go to whoever got there first
+  getInfo: function (limit = 10) {
+    return Score.find().sort({ score: -1, createdAt: 1 }).limit(limit).lean();
+  },
 };

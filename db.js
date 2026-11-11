@@ -23,10 +23,14 @@ const titleSchema = new mongoose.Schema({
 // adding duplicates
 titleSchema.index({ id: 1 }, { unique: true });
 
+// score is a Number so the board sorts 10 above 9 (as text, "9" > "10");
+// total is how many questions that quiz had
 const scoreSchema = new mongoose.Schema({
   username: String,
-  score: String,
-});
+  score: Number,
+  total: Number,
+}, { timestamps: true });
+scoreSchema.index({ score: -1, createdAt: 1 });
 
 const Anime = mongoose.model("anime", titleSchema, "animes");
 const Manga = mongoose.model("manga", titleSchema, "mangas");
@@ -38,6 +42,7 @@ async function needsMigration() {
   for (const Model of [Anime, Manga]) {
     if (await Model.exists({ $or: [{ nbVotes: { $type: "string" } }, { id: { $type: "string" } }] })) return true;
   }
+  if (await Score.exists({ score: { $type: "string" } })) return true;
   return false;
 }
 

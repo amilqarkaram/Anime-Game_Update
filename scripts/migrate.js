@@ -16,6 +16,7 @@ const NUMBER_FIELDS = [
   [db.Manga, "nbVotes", "int"],
   [db.Manga, "weightedScore", "double"],
   [db.Manga, "bayesianScore", "double"],
+  [db.Score, "score", "int"],
 ];
 
 async function toNumbers(Model, field, to) {
@@ -47,6 +48,10 @@ async function migrate() {
     await removeDuplicates(Model);
     await Model.syncIndexes();
   }
+  // every quiz used to have 10 questions
+  const scores = await db.Score.collection.updateMany({ total: { $exists: false } }, { $set: { total: 10 } });
+  console.log(`scores: set total on ${scores.modifiedCount}`);
+  await db.Score.syncIndexes();
 }
 
 module.exports = { migrate };

@@ -148,14 +148,21 @@ function createApp(options = {}) {
       game.scoreSaved = true;
       await new Promise((resolve, reject) => req.session.save((err) => (err ? reject(err) : resolve())));
       try {
-        await saveScore.addInfo(game.username, game.score);
+        const saved = await saveScore.addInfo(game.username, game.score, game.questions.length);
+        game.scoreId = String(saved._id);
       } catch (err) {
         game.scoreSaved = false; // let a reload try again
         throw err;
       }
     }
-    const arr = await saveScore.getInfo();
-    res.render("score", { scoreboard: arr, username: game.username, score: game.score, numQuestions: game.questions.length });
+    const scoreboard = await saveScore.getInfo(10);
+    res.render("score", {
+      scoreboard,
+      myScoreId: game.scoreId,
+      username: game.username,
+      score: game.score,
+      numQuestions: game.questions.length,
+    });
   });
 
   // Anything unexpected (database down, a bug) shows a page with a way back
